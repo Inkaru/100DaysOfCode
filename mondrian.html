@@ -1,0 +1,180 @@
+<body>
+    <div id="container"></div>
+    <script src="js/three.min.js"></script>
+    <script id="vertexShader" type="x-shader/x-vertex">
+        void main() {
+            gl_Position = vec4( position, 1.0 );
+        }
+    </script>
+    <script id="fragmentShader" type="x-shader/x-fragment">
+
+    uniform vec2 u_resolution;
+    uniform vec2 u_mouse;
+    uniform float u_time;
+
+    uniform vec3 u_hline;
+    uniform vec3 u_vline;
+    uniform vec4 u_rline;
+
+    uniform vec4 u_red;
+    uniform vec4 u_yellow;
+    uniform vec4 u_blue;
+
+    float hline(in float x, in float width){
+        vec2 st = gl_FragCoord.xy/u_resolution.xy;
+        return 1. - (step(x + width * .5,st.x) + step(-x + width * .5,-st.x));
+    }
+
+    float vline(in float y, in float width){
+        vec2 st = gl_FragCoord.xy/u_resolution.xy;
+        return 1. - (step(y + width * .5,st.y) + step(-y + width * .5,-st.y));
+    }
+
+    // x, y center of the rectangle
+    float rect(in float x, in float y, in float width, in float height){
+        return hline(x,width) * vline(y,height);
+    }
+
+    // x, y top left corner
+    float rect2(in float x, in float y, in float width, in float height){
+        return hline(x + width * .5,width) * vline(y + height * .5,height);
+    }
+
+    void main(){
+        
+        vec3 color = vec3(1.);
+        
+        float redRect = rect2(u_red.x,u_red.y,u_red.z,u_red.w);
+        float blueRect = rect2(u_blue.x,u_blue.y,u_blue.z,u_blue.w);
+        float yellowRect = rect2(u_yellow.x,u_yellow.y,u_yellow.z,u_yellow.w);
+               
+        float lines = 0.;
+
+        for (int i = 0; i < 3; i++) {
+            lines += hline(u_hline[i], 0.02);
+            lines += vline(u_vline[i], 0.02);
+        }
+
+        lines += rect2(u_rline.x,u_rline.w,u_rline.z,0.02);
+        lines += rect2(u_rline.y,u_rline.y,0.02,u_rline.w);
+
+        color = mix(color,vec3(1.,0.,0.),redRect);
+        color = mix(color,vec3(1.000,0.952,0.126),yellowRect);
+        color = mix(color,vec3(0.049,0.002,0.880),blueRect);
+        color = mix(color,vec3(0.,0.,0.),lines);
+        gl_FragColor = vec4(color,1.0);
+    }
+    </script>
+    <script>
+        var container;
+        var camera, scene, renderer;
+        var uniforms;
+
+        init();
+        animate();
+
+        function init() {
+            container = document.getElementById( 'container' );
+
+            camera = new THREE.Camera();
+            camera.position.z = 1;
+
+            scene = new THREE.Scene();
+
+            var geometry = new THREE.PlaneBufferGeometry( 2, 2 );
+
+            uniforms = {
+                u_time: { type: "float", value: 1.0 },
+                u_resolution: { type: "vec2", value: new THREE.Vector2() },
+                u_mouse: { type: "vec2", value: new THREE.Vector2() },
+                u_hline: {type: 'vec3', value: new THREE.Vector3().random()},
+                u_vline: {type: 'vec3', value: new THREE.Vector3().random()},
+                u_rline: {type: 'vec4', value: new THREE.Vector4().random()},
+                u_red: {type: 'vec4', value: new THREE.Vector4()},
+                u_yellow: {type: 'vec4', value: new THREE.Vector4()},
+                u_blue: {type: 'vec4', value: new THREE.Vector4()}
+            };
+
+            uniforms.u_red.value = randomRect(uniforms.u_hline.value.toArray().sort(),uniforms.u_vline.value.toArray().sort());
+            uniforms.u_yellow.value = randomRect(uniforms.u_hline.value.toArray().sort(),uniforms.u_vline.value.toArray().sort());
+            uniforms.u_blue.value = randomRect(uniforms.u_hline.value.toArray().sort(),uniforms.u_vline.value.toArray().sort());
+            uniforms.u_rline.value = randomRect(uniforms.u_hline.value.toArray().sort(),uniforms.u_vline.value.toArray().sort());
+
+            var material = new THREE.ShaderMaterial( {
+                uniforms: uniforms,
+                vertexShader: document.getElementById( 'vertexShader' ).textContent,
+                fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+            } );
+
+            var mesh = new THREE.Mesh( geometry, material );
+            scene.add( mesh );
+
+            renderer = new THREE.WebGLRenderer();
+            renderer.setPixelRatio( window.devicePixelRatio );
+
+            container.appendChild( renderer.domElement );
+
+            onWindowResize();
+            window.addEventListener( 'resize', onWindowResize, false );
+
+            document.onmousemove = function(e){
+              uniforms.u_mouse.value.x = e.pageX
+              uniforms.u_mouse.value.y = e.pageY
+            }
+            
+        }
+
+        function getRandomInt(max) {
+            return Math.floor(Math.random() * Math.floor(max));
+        }
+
+        function randomRect(h,v){
+
+            r1 = getRandomInt(4*4);
+            x1 = r1 % 4;
+            y1 = Math.floor(r1/4);
+
+            x2 = x1 + 1;
+            y2 = y1 + 1;
+
+            if(x1 > 0) {
+                x1 = h[x1-1];
+            }
+
+            if(y1 > 0) {
+                y1 = v[y1-1];
+            }
+
+            if(x2 < 4) {
+                x2 = h[x2-1];
+            } else {
+                x2 = 1;
+            }
+
+            if(y2 < 4) {
+                y2 = v[y2-1];
+            } else {
+                y2 = 1;
+            }
+
+            return new THREE.Vector4(x1,y1, x2-x1 , y2-y1);
+
+        }
+
+        function onWindowResize( event ) {
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            uniforms.u_resolution.value.x = renderer.domElement.width;
+            uniforms.u_resolution.value.y = renderer.domElement.height;
+        }
+
+        function animate() {
+            requestAnimationFrame( animate );
+            render();
+        }
+
+        function render() {
+            uniforms.u_time.value += 0.05;
+            renderer.render( scene, camera );
+        }
+    </script>
+</body>
