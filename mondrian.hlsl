@@ -6,8 +6,6 @@ uniform vec2 u_resolution;
 uniform vec2 u_mouse;
 uniform float u_time;
 
-float[] vl = []
-
 float hline(in float x, in float width){
     vec2 st = gl_FragCoord.xy/u_resolution.xy;
     return 1. - (step(x + width * .5,st.x) + step(-x + width * .5,-st.x));
