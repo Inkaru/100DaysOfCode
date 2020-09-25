@@ -46,12 +46,27 @@ float sonar(in vec2 pos,in float radius){
     return c;
 }
 
+float circle(in vec2 pos, float radius, float stroke){
+    float r = length(pos);
+    float w = stroke / radius;
+    float c = step(radius - w,r) - step(radius + w,r);
+    c = smoothstep(radius - w, radius, r) - smoothstep(radius, radius + w, r) ;
+    return c;
+}
+
 void main(){
     vec2 st = gl_FragCoord.xy/u_resolution.xy;
-    vec3 color = vec3(0.0);
+    vec4 color = vec4(0.0,0.,0.,1.);
+
+    vec4 darkblue = vec4(0.2667, 0.3176, 1.0, 1.0);
 
     // Add the shape on the foreground
-    color += sonar(st - vec2(.5),.7) * vec3(0.1176, 1.0, 0.0);
+    color += sonar(st - vec2(.5),.7) * vec4(0.302, 0.9529, 1.0, 1.0);
+    color += circle(st - vec2(.5), .2,0.001) * darkblue;
+    color += box(st - vec2(0.,.2),vec2(.005,.04)) *  darkblue;
+    color += box(st - vec2(0.,-.2),vec2(.005,.04)) *  darkblue;
+    color += box(st - vec2(.2,0.),vec2(.04,.005)) *  darkblue;
+    color += box(st - vec2(-.2,0.),vec2(.04,.005)) *  darkblue;
 
-    gl_FragColor = vec4(color,1.0);
+    gl_FragColor = color;
 }
