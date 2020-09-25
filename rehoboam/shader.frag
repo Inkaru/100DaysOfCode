@@ -96,7 +96,7 @@ void main() {
 
     vec3 color = vec3(1.);
     color *= 1. - (smoothstep(.29,.29 + 0.01 * noise(st.x * u_time),r) - step(radius,r));
-    color += 1. - vec3(smoothstep(.4,0.275,r));
+    color += 1. - vec3(smoothstep(.4,0.285,r));
   
     gl_FragColor = vec4(color.xyz,1.);
 }
