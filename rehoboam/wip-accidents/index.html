@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Rehoboam recreation</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/p5.js"></script>
+    <script>
+        let theShader;
+
+        function preload(){
+          theShader = loadShader('../basic.vert','accident2.frag');
+        }
+
+        function setup() {
+          let size = min(windowHeight,windowWidth);
+          createCanvas(size, size, WEBGL);
+          noStroke();
+        }
+
+        function draw() {
+          shader(theShader);
+
+          theShader.setUniform("u_resolution", [width, height]);
+          theShader.setUniform("u_time", millis() / 1000.0);
+          theShader.setUniform("u_mouse", [mouseX, map(mouseY, 0, height, height, 0)]);
+
+          rect(0,0,width, height);
+        }
+
+        function windowResized() {
+          size = min(windowHeight,windowWidth);
+          resizeCanvas(size, size, WEBGL);
+        }
+
+    </script>
+  </head>
+
+  <body>
+    <main>
+    </main>
+  </body>
+
+</html>
