@@ -79,9 +79,11 @@ void main(){
     float a = atan(pos.y,pos.x);
 
     float r2 = .3;
-    r2 = .25 + 0.2 * noise(st.x *  100. + st.y * 100. + u_time);
+    r2 = .25 + 0.2 * noise(st.x *  100. + st.y * 100. + u_time * 2.);
 
-    color *= step(0.1 + 0.1 * noise(st.x * 10. + u_time),r) - step(r2,r);
+    float lim1 = 0.1 + 0.1 * noise(st.x * 10. + u_time);
+
+    color *= smoothstep(0.98 * lim1,lim1,r) - smoothstep(0.98*r2,r2,r);
 
     gl_FragColor = vec4(color.xyz,1.);
 }
